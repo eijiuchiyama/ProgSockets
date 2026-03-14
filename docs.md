@@ -107,6 +107,26 @@ Servidor:
 23
 Meu recurso muito legal
 
+### Logging
+
+Operações de protocolo
+
+CREATE valor cliente
+GET valor cliente
+SET id valor cliente
+RESERVE id cliente
+RELEASE id cliente
+LIST cliente
+
+Erros
+
+ERRO codigo descricao
+
+Conexões e desconexões
+
+CONEXAO cliente
+DESCONEXAO cliente
+
 ### Tarefas
 
 - Gerenciador de recursos
