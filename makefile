@@ -1,7 +1,7 @@
 
 .PHONY: build clean
 
-SRCS = main.c parser.c resource_man.c
+SRCS = src/main.c src/parser.c src/resource_man.c
 
 build: main
 
