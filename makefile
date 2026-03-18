@@ -1,10 +1,12 @@
 
 .PHONY: build clean
 
+SRCS = main.c parser.c resource_man.c
+
 build: main
 
-main: main.c
-	gcc -o main main.c -lpthread
+main: $(SRCS)
+	gcc -o main $< -lpthread
 
 clean:
 	rm -f main

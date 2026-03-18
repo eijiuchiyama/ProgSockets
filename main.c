@@ -7,28 +7,25 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <pthread.h>
+#include "resource_man.c"
+#include "parser.c"
+#include "protocol.h"
 
-#define MAXMESSAGE 4096
 #define PORT 8842
-
-struct resource{
-  int id;
-  
-};
 
 void *handler(void *args)
 {
   int conn = *((int *)args);
   free(args);
-  char received_message[MAXMESSAGE + 1];
+  char received_message[MAX_MESSAGE + 1];
   long n;
   
-    while ((n = read(conn, received_message, MAXMESSAGE)) > 0)
+    while ((n = read(conn, received_message, MAX_MESSAGE)) > 0)
     {
       received_message[n] = 0;
       printf("[Cliente enviou:] %s", received_message);
-  
-      write(conn, received_message, strlen(received_message));
+
+      parse(received_message);
     }
   
     printf("[Uma conexão encerrada]\n");
