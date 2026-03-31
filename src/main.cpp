@@ -17,6 +17,7 @@ void *handler(void *args)
   int conn = *((int *)args);
   free(args);
   char received_message[MAX_MESSAGE + 1];
+  pthread_t self = pthread_self();
   long n;
   
     while ((n = read(conn, received_message, MAX_MESSAGE)) > 0)
@@ -24,7 +25,7 @@ void *handler(void *args)
       received_message[n] = 0;
       printf("[Cliente enviou:] %s", received_message);
 
-      parse(received_message);
+      parse(received_message, &self);
     }
   
     printf("[Uma conexão encerrada]\n");

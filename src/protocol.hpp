@@ -1,5 +1,7 @@
 #pragma once
 
+#include <pthread.h>
+
 #define MAX_MESSAGE 4096
 
 typedef enum {

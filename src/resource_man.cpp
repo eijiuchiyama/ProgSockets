@@ -1,3 +1,4 @@
+#include <bits/stdc++.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include "resource_man.hpp"
@@ -26,6 +27,8 @@ Response new_response(){
 
 Response create(char* value, pthread_t* requester){
     Response resp = new_response();
+    std::cout << "Criando recurso com valor: " << value << std::endl;
+    std::fflush(stdout);
     if(size == MAX_SIZE-1){
         resp.status_code = 5;
         return resp;

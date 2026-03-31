@@ -22,6 +22,10 @@ typedef struct{
 
 void initialize();
 Response create(char*, pthread_t*);
-// etc...
+Response get(int, pthread_t*);
+Response set(int, char*, pthread_t*);
+Response reserve(int, pthread_t*);
+Response release(int, pthread_t*);
+Response list();
 
 #endif
