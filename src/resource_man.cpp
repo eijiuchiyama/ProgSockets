@@ -1,25 +1,8 @@
-#include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include "resource_man.hpp"
 
 #define MAX_SIZE 40
-
-typedef struct{
-  int id;
-  char* value;
-  bool reserved;
-  pthread_t* belongs_to;
-} Resource;
-
-
-typedef struct{
-    int status_code;
-    int id;
-    char* value;
-    int count;
-    Resource** list;
-
-} Response; 
 
 Resource** all_resources;
 

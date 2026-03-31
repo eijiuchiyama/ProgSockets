@@ -6,10 +6,9 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <pthread.h>
-#include "resource_man.cpp"
-#include "parser.cpp"
-#include "protocol.h"
+#include "resource_man.hpp"
+#include "parser.hpp"
+#include "protocol.hpp"
 
 #define PORT 8842
 

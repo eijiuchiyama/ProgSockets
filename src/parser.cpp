@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "protocol.h"
+#include "protocol.hpp"
 
 char* get_line(char *input) {
   char* line = input;
