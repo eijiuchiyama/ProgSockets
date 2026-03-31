@@ -1,4 +1,3 @@
-
 .PHONY: build clean
 
 SRCS = src/main.cpp src/parser.cpp src/resource_man.cpp
@@ -6,7 +5,7 @@ SRCS = src/main.cpp src/parser.cpp src/resource_man.cpp
 build: main
 
 main: $(SRCS)
-	gcc -o main $< -lpthread
+	g++ -o main $(SRCS) -lpthread
 
 clean:
 	rm -f main
