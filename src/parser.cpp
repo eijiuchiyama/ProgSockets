@@ -23,7 +23,7 @@ ParseResult parse(char *input) {
   int N = strlen(input);
   ParseResult result;
 
-  char *buff = malloc(N);
+  char *buff = (char*) malloc(N);
   strcpy(buff, input);
 
   char *command = get_line(buff);

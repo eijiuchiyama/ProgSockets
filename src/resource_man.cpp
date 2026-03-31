@@ -26,7 +26,7 @@ Resource** all_resources;
 int size = 0;
 
 void initialize(){
-    all_resources = malloc(MAX_SIZE * sizeof(Response));
+    all_resources = (Resource**) malloc(MAX_SIZE * sizeof(Resource*));
     for(int i = 0; i < MAX_SIZE; i++){
         all_resources[i] = NULL;
     }
@@ -48,7 +48,7 @@ Response create(char* value, pthread_t* requester){
         return resp;
     }
 
-    Resource* r = malloc(sizeof(Resource));
+    Resource* r = (Resource*) malloc(sizeof(Resource));
     r->id = size;
     size++;
     r->value = value;

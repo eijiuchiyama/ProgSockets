@@ -7,8 +7,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <pthread.h>
-#include "resource_man.c"
-#include "parser.c"
+#include "resource_man.cpp"
+#include "parser.cpp"
 #include "protocol.h"
 
 #define PORT 8842
@@ -45,7 +45,8 @@ int main(int argc, char **argv)
     exit(2);
   }
 
-  if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+  int opt = 1;
+  if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) < 0)
   {
     perror("setsockopt(SO_REUSEADDR) failed");
   }
@@ -79,7 +80,7 @@ int main(int argc, char **argv)
 
     pthread_t thread;
 
-    int *conn_copy = malloc(sizeof(int));
+    int *conn_copy = (int*) malloc(sizeof(int));
     *conn_copy = connection_socket;
     pthread_create(&thread, NULL, handler, conn_copy);
     pthread_detach(thread);
