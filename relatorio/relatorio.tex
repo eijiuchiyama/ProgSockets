@@ -2,9 +2,10 @@
 
 % --- Preâmbulo (onde ficam os pacotes e configurações) ---
 \usepackage[utf8]{inputenc} % Acentuação direta
+\usepackage{fancyvrb}
 
 \title{Relatório EP1 MAC0352}
-\author{Seu Nome}
+\author{Felipe Kelemen, Gustavo Bastos, Lucas Uchiyama, Octavio Carneiro}
 \date{\today} % Coloca a data atual automaticamente
 
 % --- Início do Documento ---
@@ -12,11 +13,77 @@
 
 \maketitle % Cria o título com base nas informações acima
 
-\section{Introdução}
-Este é o meu primeiro texto usando LaTeX. Ele é ótimo para produções científicas.
+\section{Arquitetura do sistema}
 
-\section{Desenvolvimento}
-Aqui posso adicionar equações: $E = mc^2$.
+
+\section{Protocolo de comunicação}
+
+Foi utilizado como protocolo da camada de aplicação o Distributed Resource Control Protocol (DRCP), criado por nós mesmos.
+
+\subsection{Métodos}
+
+\begin{itemize}
+	\item CREATE(valor string/int) \(->\) id int \(|\) error
+	\subitem Caso sucesso: id do recurso criado (int)
+	\subitem Casos erro: Limite de recursos (5), Valor inválido (6)
+	
+	\item GET(id int) \(->\) valor string/int \(|\) error
+	\subitem Caso sucesso: valor string/int
+	\subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3)
+	
+	\item SET(id int, valor string/int) \(->\) ok \(|\) error
+	\subitem Caso sucesso: ok
+	\subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3), Valor inválido (6)
+	
+	\item RESERVE(id int) \(->\) ok \(|\) error
+	\subitem Caso sucesso: ok
+	\subitem Casos erro: Recurso já reservado por alguém (1), Recurso inexistente (2)
+	
+	\item - RELEASE(id int) \(->\) ok \(|\) error
+	\subitem Caso sucesso: ok
+	\subitem Casos erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3)
+	
+	\item - LIST() \(->\) ok \(|\) error
+	\subitem Caso sucesso: count int, lista de ids (Recurso[])
+	\subitem Casos de erro: nenhum
+\end{itemize}
+
+\subsection{Códigos de erro}
+
+\begin{itemize}
+	\item Recurso já reservado por alguém (1)
+	\item Recurso inexistente (2)
+	\item Recurso livre porém não reservado (3)
+	\item Limite de recursos (5)
+	\item Valor inválido (6)
+	\item Método inexistente (7)
+	\item Bad request (8)
+	\item Internal server error (500)
+\end{itemize}
+
+\section{Estrutura de dados do servidor}
+
+Os dados no servidor são armazenados em um vetor de Resources que, por sua vez, é uma estrutura criada por nós e apresentada abaixo:
+
+\begin{Verbatim}[tabsize=4]
+typedef struct{
+	int id;
+	char* value;
+	bool reserved;
+	pthread_t* belongs_to;
+} Resource;
+\end{Verbatim}
+
+\section{Estratégia de concorrência}
+
+\section{Tratamento de falhas}
+
+\section{Experimentos realizados}
+
+\section{Limitações e melhorias futuras}
+
+
+
 
 \end{document}
 
