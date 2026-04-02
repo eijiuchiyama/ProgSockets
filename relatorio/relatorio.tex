@@ -15,6 +15,9 @@
 
 \section{Arquitetura do sistema}
 
+O programa utiliza a arquitetura cliente-servidor, juntamente com o protocolo da camada de aplicação DRCP, de nossa autoria, e o protocolo TCP nada camada de transporte, utilizando como base um exemplo de cliente e servidor simples.
+
+O servidor é dividido de forma a separar a manipulação dos recursos (resource manager), a interpretação das mensagens  recebidas (parser) e a escuta do recebimento das mensagens (listener).
 
 \section{Protocolo de comunicação}
 
@@ -23,30 +26,57 @@ Foi utilizado como protocolo da camada de aplicação o Distributed Resource Con
 \subsection{Métodos}
 
 \begin{itemize}
-	\item CREATE(valor string/int) \(->\) id int \(|\) error
-	\subitem Caso sucesso: id do recurso criado (int)
-	\subitem Casos erro: Limite de recursos (5), Valor inválido (6)
+	\item CREATE(valor(string/int))
+	\subitem Caso sucesso: Devolve id do recurso criado(int)
+	\subitem Casos de erro: Limite de recursos (5), Valor inválido (6)
 	
-	\item GET(id int) \(->\) valor string/int \(|\) error
-	\subitem Caso sucesso: valor string/int
+	\item GET(id(int))
+	\subitem Caso sucesso: Devolve valor do recurso(string/int)
 	\subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3)
 	
-	\item SET(id int, valor string/int) \(->\) ok \(|\) error
-	\subitem Caso sucesso: ok
+	\item SET(id(int), valor(string/int))
+	\subitem Caso sucesso: Não devolve nada
 	\subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3), Valor inválido (6)
 	
-	\item RESERVE(id int) \(->\) ok \(|\) error
-	\subitem Caso sucesso: ok
-	\subitem Casos erro: Recurso já reservado por alguém (1), Recurso inexistente (2)
+	\item RESERVE(id(int))
+	\subitem Caso sucesso: Não devolve nada
+	\subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2)
 	
-	\item - RELEASE(id int) \(->\) ok \(|\) error
-	\subitem Caso sucesso: ok
-	\subitem Casos erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3)
+	\item - RELEASE(id(int))
+	\subitem Caso sucesso: Não devolve nada
+	\subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3)
 	
-	\item - LIST() \(->\) ok \(|\) error
-	\subitem Caso sucesso: count int, lista de ids (Recurso[])
-	\subitem Casos de erro: nenhum
+	\item - LIST()
+	\subitem Caso sucesso: Devolve contador de ids(int), lista de ids(Resource[])
+	\subitem Casos de erro: Nenhum
 \end{itemize}
+
+\subsection{Solicitação e resposta}
+
+A solicitação do cliente para o servidor é realizada passando o nome do método os parâmetros em uma única linha:
+
+\begin{Verbatim}[tabsize=4]
+{Método} {Parâmetros}
+\end{Verbatim}
+
+Por exemplo:
+
+\begin{itemize}
+	\item CREATE "Meu recurso muito legal"
+	\item GET 10
+\end{itemize}
+
+Por outro lado, a resposta do servidor para o cliente estará no seguinte formato, caso sucesso:
+
+\begin{Verbatim}[tabsize=4]
+{Emoji joinha} {Resultado}
+\end{Verbatim}
+
+Caso erro, a resposta será:
+
+\begin{Verbatim}[tabsize=4]
+{Emoji irritado} {Código de erro} {Descrição do erro}
+\end{Verbatim}
 
 \subsection{Códigos de erro}
 
@@ -60,6 +90,32 @@ Foi utilizado como protocolo da camada de aplicação o Distributed Resource Con
 	\item Bad request (8)
 	\item Internal server error (500)
 \end{itemize}
+
+\subsection{Logging}
+
+O arquivo de logging armazena todas as requisições realizadas pelos clientes no seguinte formato:
+
+\begin{Verbatim}[tabsize=4]
+CREATE valor cliente
+GET valor cliente
+SET id valor cliente
+RESERVE id cliente
+RELEASE id cliente
+LIST cliente
+\end{Verbatim}
+
+Erros:
+
+\begin{Verbatim}[tabsize=4]
+ERRO codigo descricao
+\end{Verbatim}
+
+Conexões e desconexões:
+
+\begin{Verbatim}[tabsize=4]
+CONEXAO cliente
+DESCONEXAO cliente
+\end{Verbatim}
 
 \section{Estrutura de dados do servidor}
 
@@ -76,7 +132,11 @@ typedef struct{
 
 \section{Estratégia de concorrência}
 
+A estratégia de concorrência utilizada foi o uso de semáforos juntamente com threads, permitindo que apenas uma thread tenha acesso aos recursos do servidor por vez.
+
 \section{Tratamento de falhas}
+
+O sistema lida com a falha em cliente tornando todos os recursos reservados por ele como públicos, permitindo que qualquer outro cliente os reserve.
 
 \section{Experimentos realizados}
 
