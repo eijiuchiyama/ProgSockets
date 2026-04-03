@@ -37,16 +37,18 @@ int main(int argc, char **argv) {
         printf("[Conectado com sucesso]\n");
     }
 
-    bzero(sent_message, sizeof(sent_message));
-    printf("Escreva sua mensagem: ");
-    n = 0;
-    while ((sent_message[n++] = getchar()) != '\n');
+	while (1) {
+		bzero(sent_message, sizeof(sent_message));
+		printf("Escreva sua mensagem: ");
+		n = 0;
+		while ((sent_message[n++] = getchar()) != '\n');
 
-    write(client_socket, sent_message, strlen(sent_message));
+		write(client_socket, sent_message, strlen(sent_message));
 
-    bzero(received_message, sizeof(received_message));
-    read(client_socket, received_message, MAXMESSAGE);
-    printf("Resposta do server: %s", received_message);
+		bzero(received_message, sizeof(received_message));
+		read(client_socket, received_message, MAXMESSAGE);
+		printf("Resposta do server: %s", received_message);
+    }
 
     close(client_socket);
 

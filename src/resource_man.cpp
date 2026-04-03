@@ -8,6 +8,7 @@
 Resource** all_resources;
 
 int size = 0;
+int initialized = false;
 
 void initialize(){
     all_resources = (Resource**) malloc(MAX_SIZE * sizeof(Resource*));
@@ -26,27 +27,44 @@ Response new_response(){
 }
 
 Response create(char* value, pthread_t* requester){
+	if(initialized == 0){
+		initialize();
+		initialized = true;
+	}
+	
     Response resp = new_response();
-    std::cout << "Criando recurso com valor: " << value << std::endl;
-    std::fflush(stdout);
-    if(size == MAX_SIZE-1){
+
+    if (!value) {
+        resp.status_code = 6;
+        return resp;
+    }
+
+    if (size >= MAX_SIZE) {
         resp.status_code = 5;
         return resp;
     }
 
     Resource* r = (Resource*) malloc(sizeof(Resource));
+
     r->id = size;
-    size++;
-    r->value = value;
+    r->value = strdup(value);
     r->belongs_to = NULL;
+
     all_resources[size] = r;
+    size++;
 
     resp.status_code = 0;
-    resp.id = r->id; 
+    resp.id = r->id;
+
     return resp;
 }
 
 Response get(int id, pthread_t* requester){
+	if(initialized == 0){
+		initialize();
+		initialized = true;
+	}
+	
     Response resp = new_response();
     if(id > MAX_SIZE || all_resources[id] == NULL){
         resp.status_code = 2;
@@ -68,6 +86,11 @@ Response get(int id, pthread_t* requester){
 }
 
 Response set(int id, char* value, pthread_t* requester){
+	if(initialized == 0){
+		initialize();
+		initialized = true;
+	}
+	
     Response resp = new_response();
     if(id > MAX_SIZE || all_resources[id] == NULL){
         resp.status_code = 2;
@@ -89,6 +112,11 @@ Response set(int id, char* value, pthread_t* requester){
 }
 
 Response reserve(int id, pthread_t* requester){
+	if(initialized == 0){
+		initialize();
+		initialized = true;
+	}
+	
     Response resp = new_response();
     if(id > MAX_SIZE || all_resources[id] == NULL){
         resp.status_code = 2;
@@ -96,7 +124,7 @@ Response reserve(int id, pthread_t* requester){
     }
 
     Resource target_resource = *all_resources[id];
-    if(target_resource.belongs_to != requester){
+    if(target_resource.belongs_to != NULL && target_resource.belongs_to != requester){
         resp.status_code = 1;
         return resp;
     }
@@ -107,6 +135,11 @@ Response reserve(int id, pthread_t* requester){
 }
 
 Response release(int id, pthread_t* requester){
+	if(initialized == 0){
+		initialize();
+		initialized = true;
+	}
+	
     Response resp = new_response();
     if(id > MAX_SIZE || all_resources[id] == NULL){
         resp.status_code = 2;
@@ -130,6 +163,11 @@ Response release(int id, pthread_t* requester){
 }
 
 Response list(){
+	if(initialized == 0){
+		initialize();
+		initialized = true;
+	}
+	
     Response resp = new_response();
     
     resp.count = size;

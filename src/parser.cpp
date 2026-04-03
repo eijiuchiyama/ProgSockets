@@ -23,63 +23,70 @@ char *next_line(char *input) {
 }
 
 ParseResult parse(char *input) {
-  int N = strlen(input);
   ParseResult result;
 
-  char *buff = (char*) malloc(N);
-  strcpy(buff, input);
+  char *buff = strdup(input); // copia segura
 
-  char *command = get_line(buff);
-  buff = next_line(buff);
-  
-  if (memcmp(command, "GET", 3) == 0) {
+  // pega comando
+  char *command = strtok(buff, " \n");
+
+  if (!command) {
+    result.error = UNKNOWN_COMMAND;
+    return result;
+  }
+
+  if (strcmp(command, "GET") == 0) {
     result.msg.command = GET;
-    char* id_str = get_line(buff);
-    long id = strtol(id_str, NULL, 10);
-    result.msg.id = id;
+
+    char *id_str = strtok(NULL, " \n");
+    result.msg.id = id_str ? strtol(id_str, NULL, 10) : 0;
     result.msg.value = NULL;
 
-  } else if (memcmp(command, "SET", 3) == 0) {
+  } else if (strcmp(command, "SET") == 0) {
     result.msg.command = SET;
-    char* id_str = get_line(buff);
-    buff = next_line(buff);
 
-    long id = strtol(id_str, NULL, 10);
-    result.msg.id = id;
-    
-    result.msg.value = strdup(buff);
+    char *id_str = strtok(NULL, " \n");
+    char *value = strtok(NULL, "\n");
 
-  } else if (memcmp(command, "CREATE", 6) == 0) {
+    result.msg.id = id_str ? strtol(id_str, NULL, 10) : 0;
+    result.msg.value = value ? strdup(value) : NULL;
+
+  } else if (strcmp(command, "CREATE") == 0) {
     result.msg.command = CREATE;
-    result.msg.value = strdup(buff);
 
-  } else if (memcmp(command, "RESERVE", 7) == 0) {
+    char *value = strtok(NULL, "\n");
+    result.msg.id = 0;
+    result.msg.value = value ? strdup(value) : NULL;
+
+  } else if (strcmp(command, "RESERVE") == 0) {
     result.msg.command = RESERVE;
-    char* id_str = get_line(buff);
-    long id = strtol(id_str, NULL, 10);
-    result.msg.id = id;
+
+    char *id_str = strtok(NULL, " \n");
+    result.msg.id = id_str ? strtol(id_str, NULL, 10) : -1;
     result.msg.value = NULL;
 
-  } else if (memcmp(command, "RELEASE", 7) == 0) {
+  } else if (strcmp(command, "RELEASE") == 0) {
     result.msg.command = RELEASE;
-    char* id_str = get_line(buff);
-    long id = strtol(id_str, NULL, 10);
-    result.msg.id = id;
+
+    char *id_str = strtok(NULL, " \n");
+    result.msg.id = id_str ? strtol(id_str, NULL, 10) : -1;
     result.msg.value = NULL;
 
-  } else if (memcmp(command, "LIST", 4) == 0) {
+  } else if (strcmp(command, "LIST") == 0) {
     result.msg.command = LIST;
+    result.msg.id = 0;
     result.msg.value = NULL;
 
   } else {
     result.error = UNKNOWN_COMMAND;
+    return result;
   }
 
   result.error = NO_ERROR;
 
   printf("[Comando:] %d\n", result.msg.command);
   printf("[ID:] %ld\n", result.msg.id);
-  printf("[Valor:] %s\n", result.msg.value);
+  printf("[Valor:] %s\n", result.msg.value ? result.msg.value : "(null)");
 
   return result;
 }

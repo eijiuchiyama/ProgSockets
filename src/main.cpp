@@ -57,7 +57,7 @@ void *handler(void *args)
       received_message[n] = 0;
       printf("[Cliente enviou:] %s", received_message);
 
-      parse_result = parse(received_message);
+      parse_result = parse(received_message); 
       response = return_response(parse_result, &self);
       
       serial_response = serialize(parse_result, response);
