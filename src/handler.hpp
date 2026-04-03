@@ -12,4 +12,4 @@
 #include "parser.hpp"
 #include "protocol.hpp"
 
-Response return_response(ParseResult, pthread_t);
+Response return_response(ParseResult, pthread_t*);

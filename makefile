@@ -1,11 +1,14 @@
 .PHONY: build clean
 
-SRCS = src/main.cpp src/parser.cpp src/resource_man.cpp
+SRCS = src/main.cpp src/parser.cpp src/resource_man.cpp src/handler.cpp
 
-build: main
+build: server client
 
-main: $(SRCS)
-	g++ -o main $(SRCS) -lpthread
+server: $(SRCS)
+	g++ -o server $(SRCS) -lpthread
+	
+client: 
+	g++ -o client tcp-echo-client.cpp -lpthread
 
 clean:
-	rm -f main
+	rm -f server client

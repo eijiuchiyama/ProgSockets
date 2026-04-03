@@ -12,31 +12,29 @@
 #include "protocol.hpp"
 #include "handler.hpp"
 
-#define PORT 8842
-
-char* serialize(ParseResult parse_result, Response response)
+std::string serialize(ParseResult parse_result, Response response)
 {
 
 	if(response.status_code != 0){
-		return u8"😡​" + to_string(response.status_code) + "\n";
+		return std::string(u8"😡​") + " " + std::to_string(response.status_code) + "\n";
 	} else if(parse_result.msg.command == GET){
-		return u8"👍" + " " + response.value + "\n";
+		return std::string(u8"👍") + " " + response.value + "\n";
 	} else if(parse_result.msg.command == SET){
-		return u8"👍" + "\n";
+		return std::string(u8"👍") + "\n";
 	} else if(parse_result.msg.command == CREATE){
-		return u8"👍" + " " + to_string(response.id) + "\n";
+		return std::string(u8"👍") + " " + std::to_string(response.id) + "\n";
 	} else if(parse_result.msg.command == RESERVE){
-		return u8"👍" + "\n";
+		return std::string(u8"👍") + "\n";
 	} else if(parse_result.msg.command == RELEASE){
-		return u8"👍" + "\n";
+		return std::string(u8"👍") + "\n";
 	} else if(parse_result.msg.command == LIST){
-		string s = "";
-		s += u8"👍";
+		std::string s = "";
+		s += std::string(u8"👍");
 		s += " "; 
-		s += to_string(response.count);
+		s += std::to_string(response.count);
 		for(int i = 0; i < response.count; i++){
 			s += " ";
-			s += to_string(resource[i]->id);
+			s += std::to_string(response.list[i]->id);
 		}
 		s += "\n";
 		return s;
@@ -52,7 +50,7 @@ void *handler(void *args)
   long n;
   ParseResult parse_result;
   Response response;
-  string serial_response;
+  std::string serial_response;
   
     while ((n = read(conn, received_message, MAX_MESSAGE)) > 0)
     {
@@ -63,7 +61,7 @@ void *handler(void *args)
       response = return_response(parse_result, &self);
       
       serial_response = serialize(parse_result, response);
-      write(conn, response.message, strlen(response.message));
+      write(conn, serial_response.c_str(), serial_response.length());
     }
   
     printf("[Uma conexão encerrada]\n");
@@ -92,7 +90,8 @@ int main(int argc, char **argv)
   bzero(&server_info, sizeof(server_info));
   server_info.sin_family = AF_INET;
   server_info.sin_addr.s_addr = htonl(INADDR_ANY);
-  server_info.sin_port = htons(PORT);
+  int port = atoi(argv[1]);
+  server_info.sin_port = htons(port);
   if ((bind(listen_socket, (struct sockaddr *)&server_info, sizeof(server_info)) == -1))
   {
     perror("erro no bind\n");

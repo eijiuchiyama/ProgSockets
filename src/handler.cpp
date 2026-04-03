@@ -11,7 +11,7 @@
 #include "protocol.hpp"
 #include "handler.hpp"
 
-Response return_response(ParseResult parse_result, pthread_t requester){
+Response return_response(ParseResult parse_result, pthread_t* requester){
 	Response response;
 	long id = parse_result.msg.id;
 	char* value = parse_result.msg.value;
