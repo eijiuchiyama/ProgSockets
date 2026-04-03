@@ -66,7 +66,7 @@ Não encontrado
 - Recurso não reservado (3) (Release um recurso não reservado)
 - Recurso não é teu (4) !deprecated
 - Limite de recursos (5)
-- Valor inválido (6)
+- Valor inválido (6) !deprecated
 - Método inexistente (7)
 - Bad request (8)
 - Internal server error (500)

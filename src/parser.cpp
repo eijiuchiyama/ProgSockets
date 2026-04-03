@@ -22,7 +22,7 @@ char *next_line(char *input) {
   return line + 1;
 }
 
-ParseResult parse(char *input, pthread_t* requester) {
+ParseResult parse(char *input) {
   int N = strlen(input);
   ParseResult result;
 
@@ -38,7 +38,6 @@ ParseResult parse(char *input, pthread_t* requester) {
     long id = strtol(id_str, NULL, 10);
     result.msg.id = id;
     result.msg.value = NULL;
-    get(id, requester);
 
   } else if (memcmp(command, "SET", 3) == 0) {
     result.msg.command = SET;
@@ -49,12 +48,10 @@ ParseResult parse(char *input, pthread_t* requester) {
     result.msg.id = id;
     
     result.msg.value = strdup(buff);
-    set(id, result.msg.value, requester);
 
   } else if (memcmp(command, "CREATE", 6) == 0) {
     result.msg.command = CREATE;
     result.msg.value = strdup(buff);
-    create(result.msg.value, requester);
 
   } else if (memcmp(command, "RESERVE", 7) == 0) {
     result.msg.command = RESERVE;
@@ -62,7 +59,6 @@ ParseResult parse(char *input, pthread_t* requester) {
     long id = strtol(id_str, NULL, 10);
     result.msg.id = id;
     result.msg.value = NULL;
-    reserve(id, requester);
 
   } else if (memcmp(command, "RELEASE", 7) == 0) {
     result.msg.command = RELEASE;
@@ -70,12 +66,10 @@ ParseResult parse(char *input, pthread_t* requester) {
     long id = strtol(id_str, NULL, 10);
     result.msg.id = id;
     result.msg.value = NULL;
-    release(id, requester);
 
   } else if (memcmp(command, "LIST", 4) == 0) {
     result.msg.command = LIST;
     result.msg.value = NULL;
-    list();
 
   } else {
     result.error = UNKNOWN_COMMAND;

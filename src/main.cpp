@@ -6,11 +6,42 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <string>
 #include "resource_man.hpp"
 #include "parser.hpp"
 #include "protocol.hpp"
+#include "handler.hpp"
 
 #define PORT 8842
+
+char* serialize(ParseResult parse_result, Response response)
+{
+
+	if(response.status_code != 0){
+		return u8"😡​" + to_string(response.status_code) + "\n";
+	} else if(parse_result.msg.command == GET){
+		return u8"👍" + " " + response.value + "\n";
+	} else if(parse_result.msg.command == SET){
+		return u8"👍" + "\n";
+	} else if(parse_result.msg.command == CREATE){
+		return u8"👍" + " " + to_string(response.id) + "\n";
+	} else if(parse_result.msg.command == RESERVE){
+		return u8"👍" + "\n";
+	} else if(parse_result.msg.command == RELEASE){
+		return u8"👍" + "\n";
+	} else if(parse_result.msg.command == LIST){
+		string s = "";
+		s += u8"👍";
+		s += " "; 
+		s += to_string(response.count);
+		for(int i = 0; i < response.count; i++){
+			s += " ";
+			s += to_string(resource[i]->id);
+		}
+		s += "\n";
+		return s;
+	}
+}
 
 void *handler(void *args)
 {
@@ -19,18 +50,24 @@ void *handler(void *args)
   char received_message[MAX_MESSAGE + 1];
   pthread_t self = pthread_self();
   long n;
+  ParseResult parse_result;
+  Response response;
+  string serial_response;
   
     while ((n = read(conn, received_message, MAX_MESSAGE)) > 0)
     {
       received_message[n] = 0;
       printf("[Cliente enviou:] %s", received_message);
 
-      parse(received_message, &self);
+      parse_result = parse(received_message);
+      response = return_response(parse_result, &self);
+      
+      serial_response = serialize(parse_result, response);
+      write(conn, response.message, strlen(response.message));
     }
   
     printf("[Uma conexão encerrada]\n");
 
-  
   return NULL;
 }
 
