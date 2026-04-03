@@ -7,10 +7,13 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <string>
+#include <semaphore.h>
 #include "resource_man.hpp"
 #include "parser.hpp"
 #include "protocol.hpp"
 #include "handler.hpp"
+
+sem_t mutex;
 
 std::string serialize(ParseResult parse_result, Response response)
 {
@@ -65,6 +68,7 @@ void *handler(void *args)
     }
   
     printf("[Uma conexão encerrada]\n");
+    release_all_from_client(&self);
 
   return NULL;
 }
@@ -106,6 +110,7 @@ int main(int argc, char **argv)
 
   printf("[Servidor no ar. Aguardando conexões na porta %s]\n", argv[1]);
 
+  sem_init(&mutex, 0, 1);
   for (;;)
   {
     if ((connection_socket = accept(listen_socket, (struct sockaddr *)NULL, NULL)) == -1)

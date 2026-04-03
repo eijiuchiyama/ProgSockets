@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <semaphore.h>
 #include "resource_man.hpp"
 
 #define MAX_SIZE 40
@@ -27,6 +28,8 @@ Response new_response(){
 }
 
 Response create(char* value, pthread_t* requester){
+ 	sem_wait(&mutex);
+ 	
 	if(initialized == 0){
 		initialize();
 		initialized = true;
@@ -36,11 +39,13 @@ Response create(char* value, pthread_t* requester){
 
     if (!value) {
         resp.status_code = 6;
+        sem_post(&mutex);
         return resp;
     }
 
     if (size >= MAX_SIZE) {
         resp.status_code = 5;
+        sem_post(&mutex);
         return resp;
     }
 
@@ -55,11 +60,16 @@ Response create(char* value, pthread_t* requester){
 
     resp.status_code = 0;
     resp.id = r->id;
+    
+    sem_post(&mutex);
 
     return resp;
 }
 
 Response get(int id, pthread_t* requester){
+
+	sem_wait(&mutex);
+
 	if(initialized == 0){
 		initialize();
 		initialized = true;
@@ -68,24 +78,33 @@ Response get(int id, pthread_t* requester){
     Response resp = new_response();
     if(id > MAX_SIZE || all_resources[id] == NULL){
         resp.status_code = 2;
+        sem_post(&mutex);
         return resp;
     }
     Resource target_resource = *all_resources[id];
     if(target_resource.belongs_to == NULL){
         resp.status_code = 3;
+        sem_post(&mutex);
         return resp;
     }
     if(target_resource.belongs_to != requester){
         resp.status_code = 1;
+        sem_post(&mutex);
         return resp;
     }
 
     resp.status_code = 0;
     resp.value = all_resources[id]->value;
+    
+    sem_post(&mutex);
+    
     return resp;
 }
 
 Response set(int id, char* value, pthread_t* requester){
+
+	sem_wait(&mutex);
+
 	if(initialized == 0){
 		initialize();
 		initialized = true;
@@ -94,24 +113,33 @@ Response set(int id, char* value, pthread_t* requester){
     Response resp = new_response();
     if(id > MAX_SIZE || all_resources[id] == NULL){
         resp.status_code = 2;
+        sem_post(&mutex);
         return resp;
     }
     Resource target_resource = *all_resources[id];
     if(target_resource.belongs_to == NULL){
         resp.status_code = 3;
+        sem_post(&mutex);
         return resp;
     }
     if(target_resource.belongs_to != requester){
         resp.status_code = 1;
+        sem_post(&mutex);
         return resp;
     }
 
     all_resources[id]->value = value;
     resp.status_code = 0;
+    
+    sem_post(&mutex);
+    
     return resp;
 }
 
 Response reserve(int id, pthread_t* requester){
+
+	sem_wait(&mutex);
+
 	if(initialized == 0){
 		initialize();
 		initialized = true;
@@ -120,21 +148,29 @@ Response reserve(int id, pthread_t* requester){
     Response resp = new_response();
     if(id > MAX_SIZE || all_resources[id] == NULL){
         resp.status_code = 2;
+        sem_post(&mutex);
         return resp;
     }
 
     Resource target_resource = *all_resources[id];
     if(target_resource.belongs_to != NULL && target_resource.belongs_to != requester){
         resp.status_code = 1;
+        sem_post(&mutex);
         return resp;
     }
 
     all_resources[id]->belongs_to = requester;
     resp.status_code = 0;
+    
+    sem_post(&mutex);
+    
     return resp;
 }
 
 Response release(int id, pthread_t* requester){
+
+	sem_wait(&mutex);
+
 	if(initialized == 0){
 		initialize();
 		initialized = true;
@@ -143,26 +179,35 @@ Response release(int id, pthread_t* requester){
     Response resp = new_response();
     if(id > MAX_SIZE || all_resources[id] == NULL){
         resp.status_code = 2;
+        sem_post(&mutex);
         return resp;
     }
 
     Resource target_resource = *all_resources[id];
     if(target_resource.belongs_to == NULL){
         resp.status_code = 3;
+        sem_post(&mutex);
         return resp;
     }
 
     if(target_resource.belongs_to != requester){
         resp.status_code = 1;
+        sem_post(&mutex);
         return resp;
     }
 
     all_resources[id]->belongs_to = NULL;
     resp.status_code = 0;
+    
+    sem_post(&mutex);
+    
     return resp;
 }
 
 Response list(){
+
+	sem_wait(&mutex);
+
 	if(initialized == 0){
 		initialize();
 		initialized = true;
@@ -173,6 +218,22 @@ Response list(){
     resp.count = size;
     resp.list = all_resources;
     resp.status_code = 0;
+    
+   	sem_post(&mutex);
+   
     return resp;
+}
+
+void release_all_from_client(pthread_t* client){
+
+	sem_wait(&mutex);
+
+	for(int i = 0; i < size; i++){
+		if(all_resources[i]->belongs_to == client){
+			all_resources[i]->belongs_to = NULL;
+		}
+	}
+	
+	sem_post(&mutex);
 }
 

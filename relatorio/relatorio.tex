@@ -17,7 +17,7 @@
 
 O programa utiliza a arquitetura cliente-servidor, juntamente com o protocolo da camada de aplicação DRCP, de nossa autoria, e o protocolo TCP nada camada de transporte, utilizando como base um exemplo de cliente e servidor simples.
 
-O servidor é dividido de forma a separar a manipulação dos recursos (resource manager), a interpretação das mensagens  recebidas (parser) e a escuta do recebimento das mensagens (listener).
+O servidor é dividido de forma a separar a manipulação dos recursos (resource manager), a interpretação das mensagens  recebidas (parser), a chamada ao resource manager (handler), e a escuta do recebimento das mensagens (listener).
 
 \section{Protocolo de comunicação}
 
@@ -66,7 +66,7 @@ Por exemplo:
 	\item GET 10
 \end{itemize}
 
-Por outro lado, a resposta do servidor para o cliente estará no seguinte formato, caso sucesso:
+Por outro lado, a resposta do servidor para o cliente estará no seguinte formato, também em uma única linha, caso sucesso:
 
 \begin{Verbatim}[tabsize=4]
 {Emoji joinha} {Resultado}
@@ -85,7 +85,6 @@ Caso erro, a resposta será:
 	\item Recurso inexistente (2)
 	\item Recurso livre porém não reservado (3)
 	\item Limite de recursos (5)
-	\item Valor inválido (6)
 	\item Método inexistente (7)
 	\item Bad request (8)
 	\item Internal server error (500)
@@ -141,7 +140,6 @@ O sistema lida com a falha em cliente tornando todos os recursos reservados por 
 \section{Experimentos realizados}
 
 \section{Limitações e melhorias futuras}
-
 
 
 

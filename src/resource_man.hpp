@@ -1,7 +1,9 @@
-#ifndef RESOURCE_MAN_H
-#define RESOURCE_MAN_H
+#pragma once
 
 #include <pthread.h>
+#include <semaphore.h>
+
+extern sem_t mutex;
 
 typedef struct{
   int id;
@@ -27,5 +29,5 @@ Response set(int, char*, pthread_t*);
 Response reserve(int, pthread_t*);
 Response release(int, pthread_t*);
 Response list();
+void release_all_from_client(pthread_t*);
 
-#endif
