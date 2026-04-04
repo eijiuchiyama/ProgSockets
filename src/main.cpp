@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <string>
 #include <semaphore.h>
+#include <fstream>
 #include "resource_man.hpp"
 #include "parser.hpp"
 #include "protocol.hpp"
@@ -15,11 +16,14 @@
 
 sem_t mutex;
 
-std::string serialize(ParseResult parse_result, Response response)
+std::string serialize(ParseResult parse_result, Response response, std::ofstream &file, pthread_t self)
 {
 
+	std::string error_codes[8] = {"", "Recurso já reservado", "Recurso inexistente", "Recurso não reservado", "", "Limite de recursos", "", "Método inexistente"};
+
 	if(response.status_code != 0){
-		return std::string(u8"😡​") + " " + std::to_string(response.status_code) + "\n";
+		file << "ERRO " << std::to_string(response.status_code) << " " << error_codes[response.status_code] << std::endl;
+		return std::string(u8"😡​") + " " + std::to_string(response.status_code) + " " + error_codes[response.status_code] + "\n";
 	} else if(parse_result.msg.command == GET){
 		return std::string(u8"👍") + " " + response.value + "\n";
 	} else if(parse_result.msg.command == SET){
@@ -46,31 +50,38 @@ std::string serialize(ParseResult parse_result, Response response)
 
 void *handler(void *args)
 {
-  int conn = *((int *)args);
-  free(args);
-  char received_message[MAX_MESSAGE + 1];
-  pthread_t self = pthread_self();
-  long n;
-  ParseResult parse_result;
-  Response response;
-  std::string serial_response;
+
+	int conn = *((int *)args);
+	free(args);
+	char received_message[MAX_MESSAGE + 1];
+	pthread_t self = pthread_self();
+	long n;
+	ParseResult parse_result;
+	Response response;
+	std::string serial_response;
+	
+	std::ofstream file("log.txt", std::ios::app);
+	file << "CONEXAO " << self << std::endl;
   
     while ((n = read(conn, received_message, MAX_MESSAGE)) > 0)
     {
       received_message[n] = 0;
       printf("[Cliente enviou:] %s", received_message);
+      file << received_message << " " << self << std::endl;
 
       parse_result = parse(received_message); 
       response = return_response(parse_result, &self);
       
-      serial_response = serialize(parse_result, response);
+      serial_response = serialize(parse_result, response, file, self);
       write(conn, serial_response.c_str(), serial_response.length());
     }
   
     printf("[Uma conexão encerrada]\n");
+    file << "DESCONEXAO " << self << std::endl;
+    file.close();
     release_all_from_client(&self);
 
-  return NULL;
+	return NULL;
 }
 
 int main(int argc, char **argv)
@@ -111,6 +122,7 @@ int main(int argc, char **argv)
   printf("[Servidor no ar. Aguardando conexões na porta %s]\n", argv[1]);
 
   sem_init(&mutex, 0, 1);
+  
   for (;;)
   {
     if ((connection_socket = accept(listen_socket, (struct sockaddr *)NULL, NULL)) == -1)

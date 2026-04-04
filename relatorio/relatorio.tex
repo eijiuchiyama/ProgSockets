@@ -86,8 +86,6 @@ Caso erro, a resposta será:
 	\item Recurso livre porém não reservado (3)
 	\item Limite de recursos (5)
 	\item Método inexistente (7)
-	\item Bad request (8)
-	\item Internal server error (500)
 \end{itemize}
 
 \subsection{Logging}
@@ -96,7 +94,7 @@ O arquivo de logging armazena todas as requisições realizadas pelos clientes n
 
 \begin{Verbatim}[tabsize=4]
 CREATE valor cliente
-GET valor cliente
+GET id cliente
 SET id valor cliente
 RESERVE id cliente
 RELEASE id cliente

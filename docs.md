@@ -68,8 +68,8 @@ Não encontrado
 - Limite de recursos (5)
 - Valor inválido (6) !deprecated
 - Método inexistente (7)
-- Bad request (8)
-- Internal server error (500)
+- Bad request (8) !deprecated
+- Internal server error (500) !deprecated
 
 ### Exemplos
 
