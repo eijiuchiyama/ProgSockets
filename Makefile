@@ -8,7 +8,7 @@ server: $(SRCS)
 	g++ -o server $(SRCS) -lpthread
 	
 client: 
-	g++ -o client tcp-echo-client.cpp -lpthread
+	g++ -o client client.cpp -lpthread
 
 clean:
 	rm -f server client
