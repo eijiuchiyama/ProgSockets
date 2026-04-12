@@ -1,6 +1,6 @@
 .PHONY: build clean
 
-SRCS = src/main.cpp src/parser.cpp src/resource_man.cpp src/handler.cpp
+SRCS = src/main.cpp src/parser.cpp src/resource_man.cpp src/handler.cpp src/logger.cpp
 
 build: server client
 
