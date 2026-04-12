@@ -23,6 +23,8 @@ char *next_line(char *input) {
 }
 
 ParseResult parse(char *input) {
+  int debug = 0;
+
   ParseResult result;
 
   char *buff = strdup(input); // copia segura
@@ -84,9 +86,11 @@ ParseResult parse(char *input) {
 
   result.error = NO_ERROR;
 
-  printf("        [Comando:] %d\n", result.msg.command);
-  printf("        [ID:] %ld\n", result.msg.id);
-  printf("        [Valor:] %s\n", result.msg.value ? result.msg.value : "(null)");
+  if (debug) {
+    printf("        [Comando:] %d\n", result.msg.command);
+    printf("        [ID:] %ld\n", result.msg.id);
+    printf("        [Valor:] %s\n", result.msg.value ? result.msg.value : "(null)");
+  }
 
   return result;
 }

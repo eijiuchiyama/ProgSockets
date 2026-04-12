@@ -17,40 +17,57 @@
 sem_t mutex;
 
 struct ThreadArgs {
-    int conn;
-    int id;
+  int conn;
+  int id;
 };
 
-std::string serialize(ParseResult parse_result, Response response, std::ofstream &file, pthread_t self)
+#define COLOR_RESET  "\033[0m"
+#define COLOR_RED    "\033[31m"
+#define COLOR_GREEN  "\033[32m"
+#define COLOR_YELLOW "\033[33m"
+#define COLOR_BLUE   "\033[34m"
+#define COLOR_GRAY   "\033[90m"
+
+#define SUCCESS std::string(u8"👍")
+#define ERROR   std::string(u8"😡")
+const std::string ERROR_MESSAGES[] = {
+    "",
+    "Recurso já reservado",
+    "Recurso inexistente",
+    "Recurso não reservado",
+    "",
+    "Limite de recursos",
+    "",
+    "Método inexistente"
+};
+
+std::string serialize(ParseResult parse_result, Response response)
 {
-
-	std::string error_codes[8] = {"", "Recurso já reservado", "Recurso inexistente", "Recurso não reservado", "", "Limite de recursos", "", "Método inexistente"};
-
-	if(response.status_code != 0){
-		file << "ERRO " << std::to_string(response.status_code) << " " << error_codes[response.status_code] << std::endl;
-		return std::string(u8"😡​") + " " + std::to_string(response.status_code) + " " + error_codes[response.status_code] + "\n";
-	} else if(parse_result.msg.command == GET){
-		return std::string(u8"👍") + " " + response.value + "\n";
-	} else if(parse_result.msg.command == SET){
-		return std::string(u8"👍") + "\n";
-	} else if(parse_result.msg.command == CREATE){
-		return std::string(u8"👍") + " " + std::to_string(response.id) + "\n";
-	} else if(parse_result.msg.command == RESERVE){
-		return std::string(u8"👍") + "\n";
-	} else if(parse_result.msg.command == RELEASE){
-		return std::string(u8"👍") + "\n";
-	} else if(parse_result.msg.command == LIST){
-		std::string s = "";
-		s += std::string(u8"👍");
-		s += " "; 
-		s += std::to_string(response.count);
-		for(int i = 0; i < response.count; i++){
-			s += " ";
-			s += std::to_string(response.list[i]->id);
-		}
-		s += "\n";
-		return s;
-	}
+	if(response.status_code != 0)
+		return ERROR + " " + std::to_string(response.status_code) + " " + ERROR_MESSAGES[response.status_code] + "\n";
+  
+  switch (parse_result.msg.command){
+    case CREATE:
+	    return SUCCESS + " " + std::to_string(response.id) + "\n";
+    case GET:
+      return SUCCESS + " " + response.value + "\n";
+    case SET:
+      return SUCCESS + "\n";
+    case RESERVE:
+      return SUCCESS + "\n";
+    case RELEASE:
+      return SUCCESS + "\n";
+    case LIST: {
+      std::string s = SUCCESS + " " + std::to_string(response.count);
+      for(int i = 0; i < response.count; i++){
+        s += " " + std::to_string(response.list[i]->id);
+      }
+      s += "\n";
+      return s;
+    }
+    default:
+      return "";
+  }
 }
 
 void *handler(void *args)
@@ -79,11 +96,14 @@ void *handler(void *args)
       parse_result = parse(received_message); 
       response = return_response(parse_result, &self);
       
-      serial_response = serialize(parse_result, response, file, self);
+      if(response.status_code != 0)
+        file << "ERRO " << std::to_string(response.status_code) << " " << ERROR_MESSAGES[response.status_code] << std::endl;
+
+      serial_response = serialize(parse_result, response);
       write(conn, serial_response.c_str(), serial_response.length());
     }
   
-    printf("[#%05d][Conexão encerrada]\n", conn_id);
+    printf(COLOR_GRAY "[#%05d][Conexão encerrada]\n" COLOR_RESET, conn_id);
     file << "DESCONEXÃO " << conn_id << std::endl;
     file.close();
     release_all_from_client(&self);
@@ -131,7 +151,7 @@ int main(int argc, char **argv)
     exit(4);
   }
 
-  printf("[Servidor no ar. Aguardando conexões na porta %s]\n", argv[1]);
+  printf(COLOR_YELLOW "[Servidor no ar. Aguardando conexões na porta %s]\n" COLOR_RESET, argv[1]);
 
   sem_init(&mutex, 0, 1);
   
@@ -153,7 +173,7 @@ int main(int argc, char **argv)
     pthread_create(&thread, NULL, handler, args);
     pthread_detach(thread);
 
-    printf("[#%05d][Conexão aberta]\n", args->id);
+    printf(COLOR_GRAY "[#%05d][Conexão aberta]\n" COLOR_RESET, args->id);
   }
 
   exit(0);
