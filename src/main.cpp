@@ -6,13 +6,16 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <string>
 #include <semaphore.h>
+#include <string>
 #include <fstream>
+#include <iomanip>
+
 #include "resource_man.hpp"
 #include "parser.hpp"
 #include "protocol.hpp"
 #include "handler.hpp"
+
 
 sem_t mutex;
 
@@ -41,12 +44,14 @@ const std::string ERROR_MESSAGES[] = {
     "Método inexistente"
 };
 
+
 std::string serialize(ParseResult parse_result, Response response)
 {
 	if(response.status_code != 0)
 		return ERROR + " " + std::to_string(response.status_code) + " " + ERROR_MESSAGES[response.status_code] + "\n";
   
-  switch (parse_result.msg.command){
+  switch (parse_result.msg.command)
+  {
     case CREATE:
 	    return SUCCESS + " " + std::to_string(response.id) + "\n";
     case GET:
@@ -59,9 +64,8 @@ std::string serialize(ParseResult parse_result, Response response)
       return SUCCESS + "\n";
     case LIST: {
       std::string s = SUCCESS + " " + std::to_string(response.count);
-      for(int i = 0; i < response.count; i++){
+      for(int i = 0; i < response.count; i++)
         s += " " + std::to_string(response.list[i]->id);
-      }
       s += "\n";
       return s;
     }
@@ -85,26 +89,24 @@ void *handler(void *args)
 	std::string serial_response;
 	
 	std::ofstream file("log.txt", std::ios::app);
-	file << "CONEXÃO #" << conn_id << std::endl;
+  file << "[#" << std::setfill('0') << std::setw(5) << conn_id << "][CONNECT]" << std::endl;
   
     while ((n = read(conn, received_message, MAX_MESSAGE)) > 0)
     {
       received_message[n] = 0;
       printf("[#%05d][Cliente enviou:] %s", conn_id, received_message);
-      file << received_message << " " << conn_id << std::endl;
+      file << "[#" << std::setfill('0') << std::setw(5) << conn_id << "][REQUEST] " << received_message;
 
       parse_result = parse(received_message); 
       response = return_response(parse_result, &self);
-      
-      if(response.status_code != 0)
-        file << "ERRO " << std::to_string(response.status_code) << " " << ERROR_MESSAGES[response.status_code] << std::endl;
 
       serial_response = serialize(parse_result, response);
       write(conn, serial_response.c_str(), serial_response.length());
+      file << "[#" << std::setfill('0') << std::setw(5) << conn_id << "][ANSWER] " << response.status_code << " " << serial_response;
     }
   
     printf(COLOR_GRAY "[#%05d][Conexão encerrada]\n" COLOR_RESET, conn_id);
-    file << "DESCONEXÃO " << conn_id << std::endl;
+    file << "[#" << std::setfill('0') << std::setw(5) << conn_id << "][DISCONNECT]" << std::endl;
     file.close();
     release_all_from_client(&self);
 
@@ -121,15 +123,13 @@ int main(int argc, char **argv)
       exit(1);
   }
 
-  if ((listen_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-  {
+  if ((listen_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
     perror("erro ao criar socket\n");
     exit(2);
   }
 
   int opt = 1;
-  if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) < 0)
-  {
+  if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) < 0) {
     perror("setsockopt(SO_REUSEADDR) failed");
   }
 
@@ -139,14 +139,12 @@ int main(int argc, char **argv)
   server_info.sin_addr.s_addr = htonl(INADDR_ANY);
   int port = atoi(argv[1]);
   server_info.sin_port = htons(port);
-  if ((bind(listen_socket, (struct sockaddr *)&server_info, sizeof(server_info)) == -1))
-  {
+  if ((bind(listen_socket, (struct sockaddr *)&server_info, sizeof(server_info)) == -1)) {
     perror("erro no bind\n");
     exit(3);
   }
 
-  if (listen(listen_socket, 1) == -1)
-  {
+  if (listen(listen_socket, 1) == -1) {
     perror("erro no listen\n");
     exit(4);
   }
@@ -159,8 +157,7 @@ int main(int argc, char **argv)
   
   for (;;)
   {
-    if ((connection_socket = accept(listen_socket, (struct sockaddr *)NULL, NULL)) == -1)
-    {
+    if ((connection_socket = accept(listen_socket, (struct sockaddr *)NULL, NULL)) == -1) {
       perror("erro no accept\n");
       exit(5);
     };
