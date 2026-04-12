@@ -16,6 +16,11 @@
 
 sem_t mutex;
 
+struct ThreadArgs {
+    int conn;
+    int id;
+};
+
 std::string serialize(ParseResult parse_result, Response response, std::ofstream &file, pthread_t self)
 {
 
@@ -50,9 +55,11 @@ std::string serialize(ParseResult parse_result, Response response, std::ofstream
 
 void *handler(void *args)
 {
-
-	int conn = *((int *)args);
+	struct ThreadArgs *t_args = (struct ThreadArgs *)args;
+	int conn = t_args->conn;
+	int conn_id = t_args->id;
 	free(args);
+
 	char received_message[MAX_MESSAGE + 1];
 	pthread_t self = pthread_self();
 	long n;
@@ -61,13 +68,13 @@ void *handler(void *args)
 	std::string serial_response;
 	
 	std::ofstream file("log.txt", std::ios::app);
-	file << "CONEXAO " << self << std::endl;
+	file << "CONEXÃO #" << conn_id << std::endl;
   
     while ((n = read(conn, received_message, MAX_MESSAGE)) > 0)
     {
       received_message[n] = 0;
-      printf("[Cliente enviou:] %s", received_message);
-      file << received_message << " " << self << std::endl;
+      printf("[#%05d][Cliente enviou:] %s", conn_id, received_message);
+      file << received_message << " " << conn_id << std::endl;
 
       parse_result = parse(received_message); 
       response = return_response(parse_result, &self);
@@ -76,8 +83,8 @@ void *handler(void *args)
       write(conn, serial_response.c_str(), serial_response.length());
     }
   
-    printf("[Uma conexão encerrada]\n");
-    file << "DESCONEXAO " << self << std::endl;
+    printf("[#%05d][Conexão encerrada]\n", conn_id);
+    file << "DESCONEXÃO " << conn_id << std::endl;
     file.close();
     release_all_from_client(&self);
 
@@ -128,6 +135,8 @@ int main(int argc, char **argv)
 
   sem_init(&mutex, 0, 1);
   
+  int connection_counter = 0;
+  
   for (;;)
   {
     if ((connection_socket = accept(listen_socket, (struct sockaddr *)NULL, NULL)) == -1)
@@ -138,12 +147,13 @@ int main(int argc, char **argv)
 
     pthread_t thread;
 
-    int *conn_copy = (int*) malloc(sizeof(int));
-    *conn_copy = connection_socket;
-    pthread_create(&thread, NULL, handler, conn_copy);
+    struct ThreadArgs *args = (struct ThreadArgs*) malloc(sizeof(struct ThreadArgs));
+    args->conn = connection_socket;
+    args->id = ++connection_counter;
+    pthread_create(&thread, NULL, handler, args);
     pthread_detach(thread);
 
-    printf("[Uma conexão aberta]\n");
+    printf("[#%05d][Conexão aberta]\n", args->id);
   }
 
   exit(0);

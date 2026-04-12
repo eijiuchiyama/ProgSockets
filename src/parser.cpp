@@ -84,9 +84,9 @@ ParseResult parse(char *input) {
 
   result.error = NO_ERROR;
 
-  printf("[Comando:] %d\n", result.msg.command);
-  printf("[ID:] %ld\n", result.msg.id);
-  printf("[Valor:] %s\n", result.msg.value ? result.msg.value : "(null)");
+  printf("        [Comando:] %d\n", result.msg.command);
+  printf("        [ID:] %ld\n", result.msg.id);
+  printf("        [Valor:] %s\n", result.msg.value ? result.msg.value : "(null)");
 
   return result;
 }
