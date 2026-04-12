@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -9,12 +8,13 @@
 #include <semaphore.h>
 #include <string>
 #include <fstream>
-#include <iomanip>
+#include <iostream>
 
 #include "resource_man.hpp"
 #include "parser.hpp"
 #include "protocol.hpp"
 #include "handler.hpp"
+#include "logger.hpp"
 
 
 sem_t mutex;
@@ -88,29 +88,29 @@ void *handler(void *args)
 	Response response;
 	std::string serial_response;
 	
-	std::ofstream file("log.txt", std::ios::app);
-  file << "[#" << std::setfill('0') << std::setw(5) << conn_id << "][CONNECT]" << std::endl;
+	std::ofstream log_file("log.txt", std::ios::app);
+	log_connect(log_file, conn_id);
   
     while ((n = read(conn, received_message, MAX_MESSAGE)) > 0)
     {
       received_message[n] = 0;
-      printf("[#%05d][Cliente enviou:] %s", conn_id, received_message);
-      file << "[#" << std::setfill('0') << std::setw(5) << conn_id << "][REQUEST] " << received_message;
-
+      std::string req(received_message);
+      log_request(log_file, conn_id, req);
+      
       parse_result = parse(received_message); 
       response = return_response(parse_result, &self);
 
       serial_response = serialize(parse_result, response);
       write(conn, serial_response.c_str(), serial_response.length());
-      file << "[#" << std::setfill('0') << std::setw(5) << conn_id << "][ANSWER] " << response.status_code << " " << serial_response;
+      
+      log_answer(log_file, conn_id, response.status_code, serial_response);
     }
   
-    printf(COLOR_GRAY "[#%05d][Conexão encerrada]\n" COLOR_RESET, conn_id);
-    file << "[#" << std::setfill('0') << std::setw(5) << conn_id << "][DISCONNECT]" << std::endl;
-    file.close();
+    log_disconnect(log_file, conn_id);
+    log_file.close();
     release_all_from_client(&self);
 
-	return NULL;
+	return nullptr;
 }
 
 int main(int argc, char **argv)
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
   struct sockaddr_in server_info;
 
   if (argc != 2) {
-      fprintf(stderr,"Uso: %s <Porta>\n",argv[0]);
+      std::cerr << "Uso: " << argv[0] << " <Porta>\n";
       exit(1);
   }
 
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
     exit(4);
   }
 
-  printf(COLOR_YELLOW "[Servidor no ar. Aguardando conexões na porta %s]\n" COLOR_RESET, argv[1]);
+  std::cout << COLOR_YELLOW << "[Servidor no ar. Aguardando conexões na porta " << argv[1] << "]\n" << COLOR_RESET;
 
   sem_init(&mutex, 0, 1);
   
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
   
   for (;;)
   {
-    if ((connection_socket = accept(listen_socket, (struct sockaddr *)NULL, NULL)) == -1) {
+    if ((connection_socket = accept(listen_socket, (struct sockaddr *)nullptr, nullptr)) == -1) {
       perror("erro no accept\n");
       exit(5);
     };
@@ -167,10 +167,8 @@ int main(int argc, char **argv)
     struct ThreadArgs *args = (struct ThreadArgs*) malloc(sizeof(struct ThreadArgs));
     args->conn = connection_socket;
     args->id = ++connection_counter;
-    pthread_create(&thread, NULL, handler, args);
+    pthread_create(&thread, nullptr, handler, args);
     pthread_detach(thread);
-
-    printf(COLOR_GRAY "[#%05d][Conexão aberta]\n" COLOR_RESET, args->id);
   }
 
   exit(0);

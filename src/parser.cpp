@@ -87,9 +87,9 @@ ParseResult parse(char *input) {
   result.error = NO_ERROR;
 
   if (debug) {
-    printf("        [Comando:] %d\n", result.msg.command);
-    printf("        [ID:] %ld\n", result.msg.id);
-    printf("        [Valor:] %s\n", result.msg.value ? result.msg.value : "(null)");
+    std::cout << "        [Comando:] " << result.msg.command << "\n";
+    std::cout << "        [ID:] " << result.msg.id << "\n";
+    std::cout << "        [Valor:] " << (result.msg.value ? result.msg.value : "(null)") << "\n";
   }
 
   return result;
