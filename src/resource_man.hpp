@@ -4,6 +4,7 @@
 #include <semaphore.h>
 
 extern sem_t mutex;
+static pthread_once_t init_once = PTHREAD_ONCE_INIT;
 
 typedef struct{
   int id;

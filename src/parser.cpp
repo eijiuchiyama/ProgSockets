@@ -34,6 +34,7 @@ ParseResult parse(char *input) {
 
   if (!command) {
     result.error = UNKNOWN_COMMAND;
+    free(buff);
     return result;
   }
 
@@ -81,10 +82,12 @@ ParseResult parse(char *input) {
 
   } else {
     result.error = UNKNOWN_COMMAND;
+    free(buff);
     return result;
   }
 
   result.error = NO_ERROR;
+  free(buff);
 
   if (debug) {
     std::cout << "        [Comando:] " << result.msg.command << "\n";
