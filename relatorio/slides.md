@@ -271,41 +271,38 @@ Cliente: CREATE R40  → 😡 5 Limite atingido
 
 ## Sistema de Logging
 
-### Eventos Registrados
+### Formato: [TIMESTAMP][#ID_CLIENTE][TIPO] [PARÂMETROS]
 
-**Operações:**
+**Tipo REQUEST:**
 
-- CREATE valor id_cliente
-- GET id id_cliente
-- SET id valor id_cliente
-- RESERVE/RELEASE id id_cliente
-- LIST id_cliente
+- CREATE valor
+- GET/SET/RESERVE/RELEASE id [valor]
+- LIST
 
-**Erros:** ERRO codigo descricao
+**Tipo ANSWER:**
 
-**Conexões:** CONEXAO/DESCONEXAO id_cliente
+- `0 👍` ou `0 👍 resultado`
+
+**Tipo CONNECT/DISCONNECT:**
+
+- Sem parâmetros
 
 ---
 
-## Exemplo de Log
+## Exemplo de Log Real
 
 ```
-CONEXAO 140028227352128
-CREATE 55 140028227352128
-DESCONEXAO 140028227352128
-CONEXAO 140028227352128
-ERRO 7 Método inexistente
-DESCONEXAO 140028227352128
+[2026-04-13 11:23:17][#00011][CONNECT]
+[2026-04-13 11:23:17][#00011][REQUEST] CREATE Rec_Cliente_1
+[2026-04-13 11:23:17][#00011][ANSWER] 0 👍 1
+[2026-04-13 11:23:17][#00011][REQUEST] RESERVE 1
+[2026-04-13 11:23:17][#00011][ANSWER] 0 👍
+[2026-04-13 11:23:17][#00011][REQUEST] GET 1
+[2026-04-13 11:23:17][#00011][ANSWER] 0 👍 Rec_Cliente_1
+[2026-04-13 11:23:17][#00011][REQUEST] LIST
+[2026-04-13 11:23:17][#00011][ANSWER] 0 👍 2 0 1
+[2026-04-13 11:23:17][#00011][DISCONNECT]
 ```
-
-### Interpretação
-
-1. Cliente conectou
-2. CREATE com valor "55"
-3. Desconectou
-4. Reconectou
-5. Erro: método inválido
-6. Desconectou
 
 ---
 
