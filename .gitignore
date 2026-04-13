@@ -1,3 +1,5 @@
 main
 tcp-echo-client
 tcp-echo-server
+server
+client
