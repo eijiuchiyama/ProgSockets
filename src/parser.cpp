@@ -27,11 +27,17 @@ ParseResult parse(char *input) {
 
   char *buff = strdup(input); // copia segura
 
+  if (!buff) {
+    result.error = UNKNOWN_COMMAND;
+    return result;
+  }
+
   // pega comando
   char *command = strtok(buff, " \n");
 
   if (!command) {
     result.error = UNKNOWN_COMMAND;
+    free(buff);
     return result;
   }
 
@@ -79,6 +85,7 @@ ParseResult parse(char *input) {
 
   } else {
     result.error = UNKNOWN_COMMAND;
+    free(buff);
     return result;
   }
 
@@ -88,5 +95,6 @@ ParseResult parse(char *input) {
   printf("[ID:] %ld\n", result.msg.id);
   printf("[Valor:] %s\n", result.msg.value ? result.msg.value : "(null)");
 
+  free(buff);
   return result;
 }

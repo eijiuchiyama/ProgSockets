@@ -76,7 +76,7 @@ Response get(int id, pthread_t *requester) {
   }
 
   Response resp = new_response();
-  if (id > MAX_SIZE || all_resources[id] == NULL) {
+  if (id < 0 || id >= MAX_SIZE || all_resources[id] == NULL) {
     resp.status_code = 2;
     sem_post(&mutex);
     return resp;
@@ -87,7 +87,7 @@ Response get(int id, pthread_t *requester) {
     sem_post(&mutex);
     return resp;
   }
-  if (target_resource.belongs_to != requester) {
+  if (!pthread_equal(*target_resource.belongs_to, *requester)) {
     resp.status_code = 1;
     sem_post(&mutex);
     return resp;
@@ -111,7 +111,7 @@ Response set(int id, char *value, pthread_t *requester) {
   }
 
   Response resp = new_response();
-  if (id > MAX_SIZE || all_resources[id] == NULL) {
+  if (id < 0 || id >= MAX_SIZE || all_resources[id] == NULL) {
     resp.status_code = 2;
     sem_post(&mutex);
     return resp;
@@ -122,13 +122,16 @@ Response set(int id, char *value, pthread_t *requester) {
     sem_post(&mutex);
     return resp;
   }
-  if (target_resource.belongs_to != requester) {
+  if (!pthread_equal(*target_resource.belongs_to, *requester)) {
     resp.status_code = 1;
     sem_post(&mutex);
     return resp;
   }
 
-  all_resources[id]->value = value;
+  if (all_resources[id]->value != NULL) {
+    free(all_resources[id]->value);
+  }
+  all_resources[id]->value = strdup(value);
   resp.status_code = 0;
 
   sem_post(&mutex);
@@ -146,7 +149,7 @@ Response reserve(int id, pthread_t *requester) {
   }
 
   Response resp = new_response();
-  if (id > MAX_SIZE || all_resources[id] == NULL) {
+  if (id < 0 || id >= MAX_SIZE || all_resources[id] == NULL) {
     resp.status_code = 2;
     sem_post(&mutex);
     return resp;
@@ -154,7 +157,7 @@ Response reserve(int id, pthread_t *requester) {
 
   Resource target_resource = *all_resources[id];
   if (target_resource.belongs_to != NULL &&
-      target_resource.belongs_to != requester) {
+      !pthread_equal(*target_resource.belongs_to, *requester)) {
     resp.status_code = 1;
     sem_post(&mutex);
     return resp;
@@ -178,7 +181,7 @@ Response release(int id, pthread_t *requester) {
   }
 
   Response resp = new_response();
-  if (id > MAX_SIZE || all_resources[id] == NULL) {
+  if (id < 0 || id >= MAX_SIZE || all_resources[id] == NULL) {
     resp.status_code = 2;
     sem_post(&mutex);
     return resp;
@@ -191,7 +194,7 @@ Response release(int id, pthread_t *requester) {
     return resp;
   }
 
-  if (target_resource.belongs_to != requester) {
+  if (!pthread_equal(*target_resource.belongs_to, *requester)) {
     resp.status_code = 1;
     sem_post(&mutex);
     return resp;

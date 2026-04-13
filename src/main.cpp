@@ -90,6 +90,11 @@ int main(int argc, char **argv) {
   int listen_socket, connection_socket;
   struct sockaddr_in server_info;
 
+  if (argc < 2) {
+    fprintf(stderr, "Uso: %s <porta>\n", argv[0]);
+    exit(1);
+  }
+
   if ((listen_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
     perror("erro ao criar socket\n");
     exit(2);

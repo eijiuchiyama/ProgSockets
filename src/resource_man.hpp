@@ -5,29 +5,27 @@
 
 extern sem_t mutex;
 
-typedef struct{
+typedef struct {
   int id;
-  char* value;
+  char *value;
   bool reserved;
-  pthread_t* belongs_to;
+  pthread_t *belongs_to;
 } Resource;
 
+typedef struct {
+  int status_code;
+  int id;
+  char *value;
+  int count;
+  Resource **list;
 
-typedef struct{
-    int status_code;
-    int id;
-    char* value;
-    int count;
-    Resource** list;
-
-} Response; 
+} Response;
 
 void initialize();
-Response create(char*, pthread_t*);
-Response get(int, pthread_t*);
-Response set(int, char*, pthread_t*);
-Response reserve(int, pthread_t*);
-Response release(int, pthread_t*);
+Response create(char *, pthread_t *);
+Response get(int, pthread_t *);
+Response set(int, char *, pthread_t *);
+Response reserve(int, pthread_t *);
+Response release(int, pthread_t *);
 Response list();
-void release_all_from_client(pthread_t*);
-
+void release_all_from_client(pthread_t *);
