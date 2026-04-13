@@ -27,28 +27,28 @@ Foi utilizado como protocolo da camada de aplicação o Distributed Resource Con
 
 \begin{itemize}
 	\item CREATE(valor(string/int))
-	\subitem Caso sucesso: Devolve id do recurso criado(int)
-	\subitem Casos de erro: Limite de recursos (5), Valor inválido (6)
-	
+	      \subitem Caso sucesso: Devolve id do recurso criado(int)
+	      \subitem Casos de erro: Limite de recursos (5), Valor inválido (6)
+
 	\item GET(id(int))
-	\subitem Caso sucesso: Devolve valor do recurso(string/int)
-	\subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3)
-	
+	      \subitem Caso sucesso: Devolve valor do recurso(string/int)
+	      \subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3)
+
 	\item SET(id(int), valor(string/int))
-	\subitem Caso sucesso: Não devolve nada
-	\subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3), Valor inválido (6)
-	
+	      \subitem Caso sucesso: Não devolve nada
+	      \subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3), Valor inválido (6)
+
 	\item RESERVE(id(int))
-	\subitem Caso sucesso: Não devolve nada
-	\subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2)
-	
+	      \subitem Caso sucesso: Não devolve nada
+	      \subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2)
+
 	\item - RELEASE(id(int))
-	\subitem Caso sucesso: Não devolve nada
-	\subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3)
-	
+	      \subitem Caso sucesso: Não devolve nada
+	      \subitem Casos de erro: Recurso já reservado por alguém (1), Recurso inexistente (2), Recurso livre porém não reservado (3)
+
 	\item - LIST()
-	\subitem Caso sucesso: Devolve contador de ids(int), lista de ids(Resource[])
-	\subitem Casos de erro: Nenhum
+	      \subitem Caso sucesso: Devolve contador de ids(int), lista de ids(Resource[])
+	      \subitem Casos de erro: Nenhum
 \end{itemize}
 
 \subsection{Solicitação e resposta}
@@ -56,7 +56,7 @@ Foi utilizado como protocolo da camada de aplicação o Distributed Resource Con
 A solicitação do cliente para o servidor é realizada passando o nome do método os parâmetros em uma única linha:
 
 \begin{Verbatim}[tabsize=4]
-{Método} {Parâmetros}
+	{Método} {Parâmetros}
 \end{Verbatim}
 
 Por exemplo:
@@ -69,13 +69,13 @@ Por exemplo:
 Por outro lado, a resposta do servidor para o cliente estará no seguinte formato, também em uma única linha, caso sucesso:
 
 \begin{Verbatim}[tabsize=4]
-{Emoji joinha} {Resultado}
+	{Emoji joinha} {Resultado}
 \end{Verbatim}
 
 Caso erro, a resposta será:
 
 \begin{Verbatim}[tabsize=4]
-{Emoji irritado} {Código de erro} {Descrição do erro}
+	{Emoji irritado} {Código de erro} {Descrição do erro}
 \end{Verbatim}
 
 \subsection{Códigos de erro}
@@ -90,41 +90,43 @@ Caso erro, a resposta será:
 
 \subsection{Logging}
 
-O arquivo de logging armazena todas as requisições realizadas pelos clientes no seguinte formato:
+O arquivo de logging armazena todas as requisições realizadas pelos clientes com timestamp, ID da conexão, tipo de evento e detalhes da operação. O formato é estruturado como segue:
 
 \begin{Verbatim}[tabsize=4]
-CREATE valor cliente
-GET id cliente
-SET id valor cliente
-RESERVE id cliente
-RELEASE id cliente
-LIST cliente
+	[YYYY-MM-DD HH:MM:SS][#ID_CONEXÃO][EVENT_TYPE] dados
 \end{Verbatim}
 
-Erros:
+Exemplos reais de operações bem-sucedidas:
 
 \begin{Verbatim}[tabsize=4]
-ERRO codigo descricao
+[2026-04-13 20:17:00][#00001][CONNECT]
+[2026-04-13 20:17:00][#00001][REQUEST] CREATE valor_inicial
+[2026-04-13 20:17:00][#00001][ANSWER] 0 {OK} 0
+[2026-04-13 20:17:00][#00001][DISCONNECT]
+
+[2026-04-13 20:17:00][#00008][REQUEST] RESERVE 7
+[2026-04-13 20:17:00][#00008][ANSWER] 0 {OK}
+
+[2026-04-13 20:17:00][#00003][REQUEST] LIST
+[2026-04-13 20:17:00][#00003][ANSWER] 0 {OK} 4 0 1 2 3
 \end{Verbatim}
 
-Conexões e desconexões:
+Exemplos de operações com erro:
 
 \begin{Verbatim}[tabsize=4]
-CONEXAO cliente
-DESCONEXAO cliente
-\end{Verbatim}
+[2026-04-13 20:17:00][#00006][REQUEST] GET 999999
+[2026-04-13 20:17:00][#00006][ANSWER] 2 {ERROR} 2 Recurso inexistente
 
-\section{Estrutura de dados do servidor}
-
-Os dados no servidor são armazenados em um vetor de Resources que, por sua vez, é uma estrutura criada por nós e apresentada abaixo:
+[2026-04-13 20:17:00][#00005][REQUEST] GET 5
+[2026-04-13 20:17:00][#00005][ANSWER] 3 {ERROR} 3 Recurso nao reservado
 
 \begin{Verbatim}[tabsize=4]
-typedef struct{
-	int id;
-	char* value;
-	bool reserved;
-	pthread_t* belongs_to;
-} Resource;
+	typedef struct{
+			int id;
+			char* value;
+			bool reserved;
+			pthread_t* belongs_to;
+		} Resource;
 \end{Verbatim}
 
 \section{Estratégia de concorrência}
