@@ -99,7 +99,5 @@ ParseResult parse(char *input) {
     std::cout << "        [ID:] " << result.msg.id << "\n";
     std::cout << "        [Valor:] " << (result.msg.value ? result.msg.value : "(null)") << "\n";
   }
-
-  free(buff);
   return result;
 }

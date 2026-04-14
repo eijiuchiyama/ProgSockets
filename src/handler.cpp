@@ -65,7 +65,7 @@ static inline sem_t *mutex_for_request(ParseResult parse_result) {
       parse_result.msg.command == RELEASE) {
     long id = parse_result.msg.id;
     if (id >= 0) {
-      return &resource_mutexes[id];
+      return &resource_mutexes[id % RESOURCE_MUTEX_COUNT];
     }
   }
 
@@ -73,7 +73,6 @@ static inline sem_t *mutex_for_request(ParseResult parse_result) {
 }
 
 Response return_response(ParseResult parse_result, pthread_t *requester) {
-
   Response response;
   long id = parse_result.msg.id;
   char *value = parse_result.msg.value;
@@ -101,8 +100,6 @@ Response return_response(ParseResult parse_result, pthread_t *requester) {
     }
     sem_post(request_mutex);
   }
-
-
 
   return response;
 }

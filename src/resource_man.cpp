@@ -190,10 +190,10 @@ void release_all_from_client(pthread_t *client) {
   pthread_once(&init_once, initialize);
 
   for (int i = 0; i < size; i++) {
+    sem_wait(&resource_mutexes[i]);
     if (all_resources[i]->belongs_to == client) {
-      sem_wait(&resource_mutexes[i]);
       all_resources[i]->belongs_to = NULL;
-      sem_post(&resource_mutexes[i]);
     }
+    sem_post(&resource_mutexes[i]);
   }
 }
