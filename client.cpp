@@ -16,8 +16,8 @@ int main(int argc, char **argv) {
     char received_message[MAXMESSAGE];
     long n;
 
-    if (argc != 2) {
-        fprintf(stderr,"Uso: %s <Porta>\n",argv[0]);
+    if (argc != 3) {
+        fprintf(stderr,"Uso: %s <Endereço IP> <Porta>\n",argv[0]);
         exit(1);
     }
 
@@ -28,8 +28,8 @@ int main(int argc, char **argv) {
 
     bzero(&client_info, sizeof(client_info));
     client_info.sin_family = AF_INET;
-    client_info.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    client_info.sin_port = htons(atoi(argv[1]));
+    client_info.sin_addr.s_addr = htonl(atoi(argv[1]));
+    client_info.sin_port = htons(atoi(argv[2]));
     if ((connect(client_socket, (struct sockaddr *)&client_info, sizeof(client_info))) == -1) {
         perror("erro no connect\n");
         exit(3);
