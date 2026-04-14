@@ -29,6 +29,11 @@ ParseResult parse(char *input) {
 
   char *buff = strdup(input); // copia segura
 
+  if (!buff) {
+    result.error = UNKNOWN_COMMAND;
+    return result;
+  }
+
   // pega comando
   char *command = strtok(buff, " \n");
 
@@ -95,5 +100,6 @@ ParseResult parse(char *input) {
     std::cout << "        [Valor:] " << (result.msg.value ? result.msg.value : "(null)") << "\n";
   }
 
+  free(buff);
   return result;
 }

@@ -1,9 +1,16 @@
+#include "handler.hpp"
+#include "parser.hpp"
+#include "protocol.hpp"
+#include "resource_man.hpp"
+#include <fstream>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <semaphore.h>
 #include <string>
@@ -26,8 +33,7 @@ sem_t resource_mutexes[RESOURCE_MUTEX_COUNT];
 #define COLOR_BLUE   "\033[34m"
 #define COLOR_GRAY   "\033[90m"
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   int listen_socket, connection_socket;
   struct sockaddr_in server_info;
 
@@ -45,7 +51,6 @@ int main(int argc, char **argv)
   if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) < 0) {
     perror("setsockopt(SO_REUSEADDR) failed");
   }
-
 
   bzero(&server_info, sizeof(server_info));
   server_info.sin_family = AF_INET;

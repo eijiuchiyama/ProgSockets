@@ -1,5 +1,6 @@
 #include "resource_man.hpp"
 #include <bits/stdc++.h>
+#include <semaphore.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
