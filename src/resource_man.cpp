@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define MAX_SIZE 40
+#define MAX_SIZE 30000
 
 Resource **all_resources;
 
