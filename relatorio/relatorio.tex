@@ -168,6 +168,20 @@ Exemplos de operações com erro:
 
 \end{Verbatim}
 
+\section{Estrutura de dados}
+O servidor utiliza uma estrutura de dados baseada em um vetor de ponteiros para armazenar os recursos criados. Cada recurso é representado pela estrutura:
+
+\begin{verbatim}
+typedef struct {
+  int id;
+  char *value;
+  bool reserved;
+  pthread_t *belongs_to;
+} Resource;
+\end{verbatim}
+
+Isso oferece um acesso rápido e eficiente aos recursos por meio de seus IDs, que correspondem aos índices do vetor. O servidor mantém um contador global para atribuir IDs únicos a cada recurso criado, garantindo que não haja colisões.
+
 \section{Estratégia de concorrência}
 
 O servidor implementa um mecanismo de sincronização para garantir que múltiplas threads possam acessar recursos compartilhados. A estratégia utiliza \textbf{um mutex (semáforo) dedicado para cada recurso}, evitando race conditions e garantindo consistência dos dados.
