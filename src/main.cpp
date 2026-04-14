@@ -17,7 +17,7 @@
 #include "logger.hpp"
 
 
-sem_t mutex;
+sem_t resource_mutexes[RESOURCE_MUTEX_COUNT];
 
 struct ThreadArgs {
   int conn;
@@ -108,7 +108,14 @@ void *handler(void *args)
   
     log_disconnect(log_file, conn_id);
     log_file.close();
+
+    for (int i = 0; i < RESOURCE_MUTEX_COUNT; i++) {
+      sem_wait(&resource_mutexes[i]);
+    }
     release_all_from_client(&self);
+    for (int i = RESOURCE_MUTEX_COUNT - 1; i >= 0; i--) {
+      sem_post(&resource_mutexes[i]);
+    }
 
 	return nullptr;
 }
@@ -151,7 +158,9 @@ int main(int argc, char **argv)
 
   std::cout << COLOR_YELLOW << "[Servidor no ar. Aguardando conexões na porta " << argv[1] << "]\n" << COLOR_RESET;
 
-  sem_init(&mutex, 0, 1);
+  for (int i = 0; i < RESOURCE_MUTEX_COUNT; i++) {
+    sem_init(&resource_mutexes[i], 0, 1);
+  }
   
   int connection_counter = 0;
   

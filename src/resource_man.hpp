@@ -3,7 +3,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-extern sem_t mutex;
+constexpr int RESOURCE_MUTEX_COUNT = 256;
+extern sem_t resource_mutexes[RESOURCE_MUTEX_COUNT];
 static pthread_once_t init_once = PTHREAD_ONCE_INIT;
 
 typedef struct{

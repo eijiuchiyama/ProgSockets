@@ -11,6 +11,7 @@ import time
 import os
 import signal
 import sys
+import random
 
 
 class TestDrcpServer:
