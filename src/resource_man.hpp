@@ -3,7 +3,9 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-constexpr int RESOURCE_MUTEX_COUNT = 256;
+#define MAX_SIZE 30000
+
+constexpr int RESOURCE_MUTEX_COUNT = MAX_SIZE;
 extern sem_t resource_mutexes[RESOURCE_MUTEX_COUNT];
 static pthread_once_t init_once = PTHREAD_ONCE_INIT;
 

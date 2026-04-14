@@ -364,7 +364,7 @@ class TestDrcpServer:
         sockets = []
         try:
             # Abrir 5 conexões rápidas
-            for i in range(5):
+            for i in range(10000):
                 sock = self._connect()
                 sockets.append(sock)
 

@@ -67,3 +67,4 @@ htmlcov/
 Thumbs.db
 
 .worktrees
+*_log.txt

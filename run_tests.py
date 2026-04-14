@@ -5,7 +5,7 @@ import time
 import sys
 
 SERVER_IP = '127.0.0.1'
-SERVER_PORT = 9000
+SERVER_PORT = 5000
 
 
 def send_recv(sock, msg):
@@ -123,7 +123,7 @@ def test_carga():
     print("Teste 3: Carga (10 clientes simultâneos)")
     print("="*50)
 
-    num_clientes = 500
+    num_clientes = 10*10*10*10
     sucessos = 0
     lock = threading.Lock()
 

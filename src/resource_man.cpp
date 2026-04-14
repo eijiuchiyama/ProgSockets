@@ -3,8 +3,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define MAX_SIZE 30000
-
 Resource **all_resources;
 
 int size = 0;
@@ -192,7 +190,9 @@ void release_all_from_client(pthread_t *client) {
 
   for (int i = 0; i < size; i++) {
     if (all_resources[i]->belongs_to == client) {
+      sem_wait(&resource_mutexes[i]);
       all_resources[i]->belongs_to = NULL;
+      sem_post(&resource_mutexes[i]);
     }
   }
 }
