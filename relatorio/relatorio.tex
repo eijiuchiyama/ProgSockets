@@ -1,4 +1,4 @@
-\documentclass{article} % Define o tipo de documento (artigo, livro, relatório)
+\documentclass{article}
 
 % --- Preâmbulo (onde ficam os pacotes e configurações) ---
 \usepackage[utf8]{inputenc} % Acentuação direta
@@ -80,17 +80,63 @@ Caso erro, a resposta será:
 
 \subsection{Códigos de erro}
 
+O servidor utiliza códigos numéricos para indicar tipos de erro. Cada código de erro tem um significado específico e é retornado quando uma operação falha:
+
 \begin{itemize}
-	\item Recurso já reservado por alguém (1)
-	\item Recurso inexistente (2)
-	\item Recurso livre porém não reservado (3)
-	\item Limite de recursos (5)
-	\item Método inexistente (7)
+	\item \textbf{Código 1 - Recurso já reservado por alguém}
+	
+	Este erro ocorre quando tenta-se executar operações não-permitidas em um recurso que já foi reservado por outro cliente. Por exemplo:
+	\begin{itemize}
+		\item Tentar reservar um recurso que já está reservado
+		\item Tentar fazer GET ou SET em um recurso reservado por outro cliente
+		\item Tentar fazer RELEASE em um recurso reservado por outro cliente
+	\end{itemize}
+	
+	Exemplo de resposta: \texttt{{ERROR} 1 Recurso já reservado}
+	
+	\item \textbf{Código 2 - Recurso inexistente}
+	
+	Este erro é retornado quando tenta-se acessar um recurso cujo ID não existe no servidor. Pode ocorrer em operações como:
+	\begin{itemize}
+		\item GET com um ID inválido ou deletado
+		\item SET em um recurso que não existe
+		\item RESERVE em um ID que nunca foi criado
+		\item RELEASE de um recurso inexistente
+	\end{itemize}
+	
+	Exemplo de resposta: \texttt{{ERROR} 2 Recurso inexistente}
+	
+	\item \textbf{Código 3 - Recurso livre porém não reservado}
+	
+	Este erro ocorre quando tenta-se executar operações que requerem que o recurso esteja reservado pelo cliente, mas o recurso está livre (não reservado por ninguém). Por exemplo:
+	\begin{itemize}
+		\item Tentar fazer GET em um recurso que não foi reservado
+		\item Tentar fazer SET em um recurso que não foi reservado
+		\item Tentar fazer RELEASE em um recurso que nunca foi reservado
+	\end{itemize}
+	
+	Exemplo de resposta: \texttt{{ERROR} 3 Recurso não reservado}
+	
+	\item \textbf{Código 5 - Limite de recursos atingido}
+	
+	Este erro é retornado quando o servidor atingiu o limite máximo de recursos que pode armazenar. Padrão do servidor: máximo de 40 recursos simultâneos. Ocorre em:
+	\begin{itemize}
+		\item CREATE quando já existem 40 recursos no servidor
+	\end{itemize}
+	
+	Exemplo de resposta: \texttt{{ERROR} 5 Limite de recursos}
+	
+	\item \textbf{Código 7 - Método inexistente}
+	
+	Este erro ocorre quando o cliente envia um comando que não é reconhecido pelo protocolo DRCP. Em outras palavras, o comando enviado não é um dos 6 métodos suportados (CREATE, GET, SET, RESERVE, RELEASE, LIST).
+	
+	Exemplo de resposta: \texttt{{ERROR} 7 Método inexistente}
 \end{itemize}
 
 \subsection{Logging}
 
-O arquivo de logging armazena todas as requisições realizadas pelos clientes com timestamp, ID da conexão, tipo de evento e detalhes da operação. O formato é estruturado como segue:
+O arquivo de logging armazena todas as requisições realizadas pelos clientes com timestamp, ID da conexão, tipo de evento e detalhes da operação.
+O formato é estruturado como segue:
 
 \begin{Verbatim}[tabsize=4]
 	[YYYY-MM-DD HH:MM:SS][#ID_CONEXÃO][EVENT_TYPE] dados
@@ -120,28 +166,136 @@ Exemplos de operações com erro:
 [2026-04-13 20:17:00][#00005][REQUEST] GET 5
 [2026-04-13 20:17:00][#00005][ANSWER] 3 {ERROR} 3 Recurso nao reservado
 
-\begin{Verbatim}[tabsize=4]
-	typedef struct{
-			int id;
-			char* value;
-			bool reserved;
-			pthread_t* belongs_to;
-		} Resource;
 \end{Verbatim}
 
 \section{Estratégia de concorrência}
 
-A estratégia de concorrência utilizada foi o uso de semáforos juntamente com threads, permitindo que apenas uma thread tenha acesso aos recursos do servidor por vez.
+O servidor implementa um mecanismo de sincronização para garantir que múltiplas threads possam acessar recursos compartilhados. A estratégia utiliza \textbf{um mutex (semáforo) dedicado para cada recurso}, evitando race conditions e garantindo consistência dos dados.
+
+\subsection{Mutex por Recurso}
+
+Cada recurso no servidor possui seu próprio semáforo (mutex) exclusivo:
+
+\begin{flushleft}
+\texttt{sem\_t resource\_mutexes[MAX\_SIZE];}
+\end{flushleft}
+
+Onde \texttt{MAX\_SIZE} é o limite máximo de recursos (30.000). Quando uma thread deseja modificar um recurso, ela deve:
+
+\begin{enumerate}
+    \item Executar \texttt{sem\_wait(\&resource\_mutexes[id])} para adquirir o mutex do recurso
+    \item Realizar a operação (CREATE, SET, RESERVE, etc.)
+    \item Executar \texttt{sem\_post(\&resource\_mutexes[id])} para liberar o mutex
+\end{enumerate}
+
+\subsection{Benefícios dessa Abordagem}
+
+Este design oferece as seguintes vantagens:
+
+\begin{itemize}
+    \item \textbf{Previne race conditions:} Duas threads não podem modificar o mesmo recurso ao mesmo tempo
+    \item \textbf{Segurança de dados:} Garante que leituras e escritas em recursos compartilhados sejam atômicas
+\end{itemize}
 
 \section{Tratamento de falhas}
 
-O sistema lida com a falha em cliente tornando todos os recursos reservados por ele como públicos, permitindo que qualquer outro cliente os reserve.
+Quando um cliente se desconecta ou o socket TCP é fechado, o servidor detecta imediatamente essa condição através da função \texttt{read()}, que retorna 0 (EOF) ou um valor negativo (erro) quando a conexão é encerrada.
+
+Ao detectar o encerramento da conexão, o servidor executa automaticamente a função \texttt{release\_all\_from\_client()} que:
+
+\begin{enumerate}
+    \item Identifica o thread ID do cliente que se desconectou
+    \item Percorre a lista de todos os recursos do servidor
+    \item Libera todos os recursos que estavam reservados por esse cliente específico
+    \item Atualiza o estado de cada recurso liberado para \textit{disponível} (não reservado)
+    \item Fecha o socket da conexão
+    \item Registra a desconexão no arquivo de log
+\end{enumerate}
+
+Este mecanismo garante que:
+\begin{itemize}
+    \item Recursos não fiquem bloqueados indefinidamente se um cliente encerrar abruptamente
+    \item Outros clientes possam acessar recursos previamente reservados por um cliente desconectado
+    \item A consistência dos dados seja mantida mesmo em caso de falha de conexão
+    \item O servidor se recupere automaticamente sem intervenção manual
+\end{itemize}
+
+\textbf{Exemplo prático:} Se um cliente reserva o recurso ID 5 e depois encerra a conexão sem fazer RELEASE, o servidor detecta a desconexão e automaticamente libera o recurso ID 5, permitindo que outro cliente o reserve.
 
 \section{Experimentos realizados}
 
+Para validar o funcionamento correto do servidor DRCP, foram desenvolvidos testes sistemáticos cobrindo desde operações unitárias até cenários complexos de concorrência. A suite de testes foi implementada em Python utilizando \textit{pytest}, permitindo automação e reprodução consistente dos resultados.
+
+\subsection{Infraestrutura de testes}
+
+Os testes foram organizados em um arquivo chamado \texttt{test\_server\_pytest.py} que implementa:
+\begin{itemize}
+    \item Setup automático: compila e inicia o servidor em \texttt{localhost:5000}
+    \item Teardown automático: encerra o servidor após os testes
+    \item 18 testes cobrindo diferentes cenários
+    \item Validação de respostas e códigos de erro
+\end{itemize}
+
+\subsection{Testes realizados}
+
+\begin{enumerate}
+    \item Teste de criação de um único recurso
+    \item Teste de criação de múltiplos recursos
+    \item Teste de listagem quando não há recursos
+    \item Teste de listagem com recursos criados
+    \item Teste de leitura (GET) de um recurso
+    \item Teste de GET em recurso inexistente
+    \item Teste de modificação (SET) de um recurso
+    \item Teste de reserva de um recurso
+    \item Teste de liberação (RELEASE) de um recurso reservado
+    \item Teste de tentativa de reservar recurso já reservado
+    \item Teste de envio de comando inválido
+    \item Teste de CREATE com valor contendo espaços
+    \item Teste de múltiplas conexões simultâneas
+    \item Teste de fluxo completo (CREATE → RESERVE → GET → SET → RELEASE)
+    \item Teste de persistência de múltiplos comandos na mesma conexão
+    \item Teste de criação com valor muito grande (1000 caracteres)
+    \item Teste de reserva concorrente do mesmo recurso de diferentes conexões
+    \item Teste de múltiplas conexões rápidas ao servidor
+\end{enumerate}
+
 \section{Limitações e melhorias futuras}
 
+\subsection{Limitações}
 
+\begin{itemize}
+    \item Limite máximo de 30.000 recursos simultâneos
+    \item Todos os dados são armazenados em memória RAM
+    \item Recursos são perdidos quando o servidor é encerrado
+    \item Sem suporte a persistência de dados
+\end{itemize}
+
+\subsection{Melhorias futuras}
+
+\subsubsection{Aumentar o limite de recursos criados}
+
+Atualmente o servidor está limitado a armazenar apenas 30.000 recursos simultâneos. Uma melhoria seria implementar uma estrutura de dados dinâmica (como um vetor de tamanho variável ou uma lista encadeada) que permita criar recursos ilimitados, restrito apenas pela memória disponível do servidor.
+
+\subsubsection{Permitir mais conexões concorrentes de clientes}
+
+O servidor utiliza threads para gerenciar conexões, mas não há limite implementado de threads simultâneas. Uma melhoria seria adicionar:
+\begin{itemize}
+    \item Pool de threads para reutilizar threads e reduzir overhead
+    \item Limite configurável de conexões simultâneas
+    \item Tratamento de fila de espera para clientes quando o limite é atingido
+    \item Monitoramento de performance com múltiplas conexões
+\end{itemize}
+
+\subsubsection{Persistir os recursos criados em disco}
+
+Implementar persistência permanente dos recursos seria crucial para um servidor em produção. As melhorias incluem:
+\begin{itemize}
+    \item Salvar recursos em disco
+    \item Implementar log de transações para recuperação em caso de falha
+    \item Sincronizar dados em memória com disco em intervalos regulares
+    \item Permitir backup e restore de dados
+    \item Implementar mecanismo de replicação para alta disponibilidade
+\end{itemize}
 
 \end{document}
 
