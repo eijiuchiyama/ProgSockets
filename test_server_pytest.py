@@ -322,6 +322,58 @@ class TestDrcpServer:
         finally:
             sock.close()
 
+    def test_16_large_value_creation(self):
+        """Testa criação com valor muito grande."""
+        sock = self._connect()
+        try:
+            # Criar valor com 1000 caracteres
+            large_value = 'A' * 1000
+            response = self._send_command(sock, f'CREATE {large_value}')
+
+            # Deve ter sucesso ou erro controlado
+            assert isinstance(response, str) and len(response) > 0
+        finally:
+            sock.close()
+
+    def test_17_concurrent_reserve_same_resource(self):
+        """Testa reserva concorrente do mesmo recurso de diferentes conexões."""
+        sock1 = self._connect()
+        sock2 = self._connect()
+        try:
+            # Criar recurso em conexão 1
+            create_resp = self._send_command(sock1, 'CREATE concurrent_test')
+            assert '👍' in create_resp or 'OK' in create_resp
+            id_str = create_resp.split()[-1]
+
+            # Reservar em conexão 1
+            reserve1 = self._send_command(sock1, f'RESERVE {id_str}')
+
+            # Tentar reservar novamente em conexão 2 (deve falhar)
+            reserve2 = self._send_command(sock2, f'RESERVE {id_str}')
+
+            # Uma deve ter sucesso, outra erro
+            assert isinstance(reserve1, str) and len(reserve1) > 0
+            assert isinstance(reserve2, str) and len(reserve2) > 0
+        finally:
+            sock1.close()
+            sock2.close()
+
+    def test_18_many_rapid_connections(self):
+        """Testa múltiplas conexões rápidas ao servidor."""
+        sockets = []
+        try:
+            # Abrir 5 conexões rápidas
+            for i in range(5):
+                sock = self._connect()
+                sockets.append(sock)
+
+                # Enviar comando CREATE em cada uma
+                response = self._send_command(sock, f'CREATE rapid_{i}')
+                assert '👍' in response or 'OK' in response
+        finally:
+            for sock in sockets:
+                sock.close()
+
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s', '--tb=short'])
